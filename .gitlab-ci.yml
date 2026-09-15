@@ -1,0 +1,12 @@
+# GitLab CI has no windows runner sooo we js build for linux ig
+
+build:linux:
+  stage: build
+  image: gcc:13
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq cmake
+  script:
+    - cmake -B build
+    - cmake --build build --config Release
+  rules:
+    - when: on_success

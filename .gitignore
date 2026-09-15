@@ -1,0 +1,13 @@
+*.exe
+*.obj
+*.o
+*.ppm
+*.png
+scratch/
+build/
+*.sconsign.dblite
+compile_commands*.json
+
+# Some fucking cache is killing me rn
+.*/
+!.github/
