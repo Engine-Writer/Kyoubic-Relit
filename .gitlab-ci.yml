@@ -4,7 +4,12 @@ build:linux:
   stage: build
   image: gcc:13
   before_script:
-    - apt-get update -qq && apt-get install -y -qq cmake
+    # gcc:13 ships GCC by default (hence the image name), but this repo
+    # defaults to clang++ on Linux everywhere else (CMakeLists.txt,
+    # SConstruct) - installing clang here keeps CI testing the same
+    # compiler actually used locally, rather than a different one CI
+    # alone would exercise.
+    - apt-get update -qq && apt-get install -y -qq cmake clang
   script:
     - cmake -B build
     - cmake --build build --config Release
