@@ -1,55 +1,23 @@
 import os
-import subprocess
 
 SetOption('num_jobs', os.cpu_count() or 4)
 
 # Override with scons cxx=clang-cl, or hell, god forbid, scons cxx=g++
-DEFAULT_CXX = 'cl' if os.name == 'nt' else 'clang-cl'
+IS_NT = os.name == 'nt'
+DEFAULT_CXX = 'cl' if IS_NT else 'clang++'
 CXX = ARGUMENTS.get('cxx', DEFAULT_CXX)
 
+# A person who thinks all the time, has nothing to think about except thought
+_probe_env = Environment(CXX=CXX, ENV=os.environ)
+_conf = _probe_env.Configure()
+_ok, _probe_output = _conf.TryAction(
+    '$CXX /O2 > $TARGET 2>&1 ; exit 0', text='int main(){}', extension='.cpp'
+)
+# I ***REALLY*** WANTED TO USE `/Compiler:IsThisConsideredAFlagOrAFileNameToYou`
+# Instead of O2 flag, but it was inconsistent soooo im using /O2 as equivalent
 
-def detect_msvc_style(cxx):
-    try:
-        # GCC type compilers think /clang:-v is a path (XD)
-        # So I kinda just went with that to figure out if something
-        # is GCC-style or MSVC-style
-        result = subprocess.run(
-            [cxx, '/clang:-v'], capture_output=True, text=True, timeout=5
-        )
-        banner = (result.stdout + result.stderr).lower()
-        if 'no such file or directory' in banner or 'no input files' in banner:
-            return False
-        
-        if 'clang version' in banner or 'installeddir' in banner:
-            return True
-    except (OSError, subprocess.SubprocessError):
-        pass
-
-    # cl.exe is somehow dumber and just emits MS banner without understaning
-    # neither /clang:-v nor --version flags (... bruh)
-    try:
-        result = subprocess.run(
-            [cxx, '--version'], capture_output=True, text=True, timeout=5
-        )
-        banner = (result.stdout + result.stderr).lower()
-        if 'microsoft' in banner:
-            return True
-        if 'clang version' in banner or 'gcc' in banner or 'g++' in banner:
-            return False
-    except (OSError, subprocess.SubprocessError):
-        pass
-
-    raise RuntimeError(
-        f"detect_msvc_style: could not determine compiler flavor for '{cxx}' "
-        "from either /clang:-v or --version output"
-    )
-    # Now you might be wondering why we are using /clang:-v 
-    # rather than an MSVC-supported flag. Thats a great question.
-    # Its cuz I couldnt actually find a version flag for MSVC 
-    # so I will assume they dont have one for some reason (somehow)
-
-
-MSVC_STYLE = detect_msvc_style(CXX)
+_probe_env = _conf.Finish()
+MSVC_STYLE = _ok and 'no such file or directory' not in _probe_output.lower()
 
 if MSVC_STYLE:
     CCFLAGS = ['/std:c++17', '/EHsc', '/O2', '/nologo']
@@ -65,15 +33,18 @@ env = Environment(
 
 env.Tool('compilation_db')
 cdb = env.CompilationDatabase('compile_commands.json')
-# Unused but to match Kyoubic Engine's build system configs
-cdb_c = env.CompilationDatabase('compile_commands_c.json')
-env.Alias('compiledb', [cdb, cdb_c])
+env.Alias('compiledb', [cdb])
 
-if not MSVC_STYLE:
+if not IS_NT:
     env.Append(LIBS=['pthread'])
 
 build_dir = 'build'
 objs_dir = os.path.join(build_dir, 'objs')
+models_dir = os.path.join(build_dir, 'models')
+
+models = env.Glob('assets/models/*.obj')
+copied_models = [env.Command(os.path.join(models_dir, os.path.basename(str(m))), m, Copy('$TARGET', '$SOURCE')) for m in models]
+env.Alias('models', copied_models)
 
 obj_format = env.Object(os.path.join(objs_dir, 'obj'), 'src/obj.cpp')
 
@@ -87,4 +58,4 @@ bake = env.Program(
     source=[env.Object(os.path.join(objs_dir, 'bake'), 'src/bake.cpp'), obj_format],
 )
 
-Default([raytracer, bake, cdb, cdb_c])
+Default([raytracer, bake, cdb, copied_models])

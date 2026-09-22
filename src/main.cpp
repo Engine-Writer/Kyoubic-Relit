@@ -53,7 +53,7 @@ void cornell_box() {
 
     cam.aspect_ratio = 1.0;
     cam.image_width = 600;
-    cam.samples_per_pixel = 256;
+    cam.samples_per_pixel = 1024;
     cam.max_depth = 50;
     cam.background = color(0, 0, 0);
 
@@ -175,8 +175,8 @@ void vulkanproject_scene() {
     auto green_plastic = make_shared<lambertian>(color(0.1, 0.8, 0.1));
 
     const char *occluder_paths[2] = {
-        "../VulkanProject/scratch_rtweekend_bake/occluder_0.obj",
-        "../VulkanProject/scratch_rtweekend_bake/occluder_4.obj",
+        "models/occluder_0.obj",
+        "models/occluder_4.obj",
     };
 
     const shared_ptr<material> occluder_mats[2] = {grey, green_plastic};
@@ -212,9 +212,9 @@ void vulkanproject_scene() {
 
     camera cam;
     cam.aspect_ratio = 16.0 / 9.0;
-    cam.image_width = 500;
-    cam.samples_per_pixel = 128;
-    cam.max_depth = 12;
+    cam.image_width = 600;
+    cam.samples_per_pixel = 1024;
+    cam.max_depth = 50;
     cam.background = color(0, 0, 0);
 
     cam.vfov = 60;
@@ -234,7 +234,7 @@ int main(int argc, char** argv) {
 
     switch (scene) {
         case 1: cornell_box(); break;
-        case 2: final_scene(400, 250, 4); break;
+        case 2: final_scene(600, 1024, 50); break;
         case 3: vulkanproject_scene(); break;
         default: cornell_box(); break;
     }

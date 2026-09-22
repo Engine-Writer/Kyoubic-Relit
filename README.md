@@ -1,5 +1,14 @@
 # Kyoubic Relit
 
+## Sample renders
+
+![Cornell box](assets/cornell_box_fixd.png)
+![Final scene](assets/final_scene_fixd.png)
+
+Disclaimer: both images have been processed slightly after rendering (converted
+from PPM to PNG, plus some very light denoising).
+They are not 100% raw unmodified `./raytracer` output.
+
 A CPU path tracer, adapted from Peter Shirley's "Ray Tracing in One Weekend"
 book series into a lightmap baker: renders triangle-soup OBJ meshes (no
 spheres/quads-only scene, unlike the books) and writes per-vertex irradiance

@@ -11,3 +11,6 @@ compile_commands*.json
 # Some fucking cache is killing me rn
 .*/
 !.github/
+!assets/
+!assets/**/*.obj
+!assets/**/*.png
